@@ -1,0 +1,47 @@
+set shouldFailed 0
+
+if { $group eq "dist_angle" && $command eq "chamf" } {
+  if { ($test_image eq "A3" && $chamf_shape eq "test-fillet.brep") ||
+       ($test_image eq "E5" && $chamf_shape eq "CCH_testchet.rle") ||
+       ($test_image eq "A1" && $chamf_shape eq "CCH_001_ahdb.rle") ||
+       ($test_image eq "A4" && $chamf_shape eq "test-fillet.brep") ||
+       ($test_image eq "A5" && $chamf_shape eq "test-fillet.brep") } {
+    set shouldFailed 1
+  }
+} elseif { $group eq "dist_angle" && $command eq "chamf_sequence" } {
+  if { ($test_image eq "A1" && $chamf_shape eq "CCH_001_ahdb.rle") ||
+       ($test_image eq "A4" && $chamf_shape eq "test-fillet.brep") } {
+    set shouldFailed 1
+  }
+}
+
+if {$shouldFailed} {
+  puts "TODO OCC33548 Windows: compute of chamfer failed"
+}
+
+restore [locate_data_file $chamf_shape] sh
+if { [dval SCALE] != 0 } {
+   tscale sh 0 0 0 SCALE
+}
+explode sh F
+renamevar sh Ed
+explode Ed E
+
+if { [string compare $group "dist_angle"] == 0 } {
+   set chamf_type A
+   set chamf_parameters $chamf_dist_angle
+}
+if { [string compare $group "dist_dist"] == 0 } {
+   set chamf_type ""
+   set chamf_parameters $chamf_dist_dist
+}
+if { [string compare $group "equal_dist"] == 0 } {
+   set chamf_type ""
+   set chamf_parameters $chamf_equal_dist
+}
+
+compute_chamf result Ed sh
+
+catch { puts [checkshape result] }
+checkview -display result -2d -path ${imagedir}/${test_image}.png
+puts "TEST COMPLETED"
